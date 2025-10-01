@@ -16,6 +16,13 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
+const FALLBACK_MENU_IMAGE = "/lo.jpg";
+const resolveMenuImage = (imageUrl) => {
+  if (typeof imageUrl === "string" && imageUrl.trim()) {
+    return imageUrl;
+  }
+  return FALLBACK_MENU_IMAGE;
+};
 function Home() {
   const [menuItems, setMenuItems] = useState([]);
   const [cartItems, setCartItems] = useState([]);
@@ -159,11 +166,18 @@ function Home() {
                         menuItems.map((menuItem) => (
                           <div key={menuItem.dish_Id} className="bg-white rounded-lg shadow-sm overflow-hidden group">
                             <div className="relative">
-                              <div
-                                className="h-48 bg-cover bg-center"
-                                style={{ backgroundImage: `url(${menuItem.imageUrl})` }}
+                              <img
+                                src={resolveMenuImage(menuItem.imageUrl)}
+                                alt={menuItem.dish_Name || "Menu item"}
+                                className="h-48 w-full object-cover"
+                                loading="lazy"
+                                onError={(event) => {
+                                  if (event.currentTarget.src !== FALLBACK_MENU_IMAGE) {
+                                    event.currentTarget.src = FALLBACK_MENU_IMAGE;
+                                  }
+                                }}
                               />
-                              <div className="absolute inset-0 bg-black bg-opacity-20 group-hover:bg-opacity-40 transition-all duration-300"></div>
+                              <div className="absolute inset-0 bg-black bg-opacity-20 group-hover:bg-opacity-40 transition-all duration-300 pointer-events-none"></div>
                             </div>
                             <div className="p-4">
                               <h4 className="text-stone-800 text-lg font-bold leading-tight">{menuItem.dish_Name}</h4>
