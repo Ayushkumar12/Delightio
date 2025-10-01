@@ -41,7 +41,7 @@ function Home() {
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const res = await fetch("http://localhost:3001/menu");
+        const res = await fetch("https://delightio.onrender.com/menu");
         if (!res.ok) throw new Error(`Failed to fetch menu: ${res.status}`);
         const data = await res.json();
         const menuItemsArray = Array.isArray(data) ? data : Object.values(data || {});
@@ -112,7 +112,7 @@ function Home() {
       return;
     }
     try {
-      const res = await fetch("http://localhost:3001/orders", {
+      const res = await fetch("https://delightio.onrender.com/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
