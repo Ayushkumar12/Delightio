@@ -17,6 +17,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const FALLBACK_MENU_IMAGE = "/lo.jpg";
+const currencyFormatter = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+const formatCurrency = (value) => currencyFormatter.format(Number(value) || 0);
 const resolveMenuImage = (imageUrl) => {
   if (typeof imageUrl === "string" && imageUrl.trim()) {
     return imageUrl;
@@ -183,7 +190,7 @@ function Home() {
                               <h4 className="text-stone-800 text-lg font-bold leading-tight">{menuItem.dish_Name}</h4>
                               <p className="text-stone-600 text-sm font-normal leading-normal mt-1">A chef special prepared fresh for you.</p>
                               <div className="flex justify-between items-center mt-4">
-                                <p className="text-stone-800 text-lg font-bold">${menuItem.dish_Price}</p>
+                                <p className="text-stone-800 text-lg font-bold">{formatCurrency(menuItem.dish_Price)}</p>
                                 <button
                                   className="bg-[var(--primary-color)] text-white rounded-md px-4 py-2 text-sm font-bold hover:bg-opacity-90 transition-colors"
                                   onClick={() => handleAddToCart(menuItem)}
@@ -228,7 +235,7 @@ function Home() {
                             {cartItems.map((cartItem) => (
                               <tr key={cartItem.dish_Id + cartItem.dish_Name} className="border-t border-stone-200">
                                 <td className="py-2 pr-2">{cartItem.dish_Name}</td>
-                                <td className="py-2 text-right">${cartItem.dish_Price}</td>
+                                <td className="py-2 text-right">{formatCurrency(cartItem.dish_Price)}</td>
                                 <td className="py-2 text-right">
                                   <div className="inline-flex items-center gap-2">
                                     <button className="size-6 rounded border border-stone-300 hover:bg-stone-100" onClick={() => decrementQty(cartItem)}>-</button>
@@ -246,15 +253,15 @@ function Home() {
                         <div className="border-t border-stone-200 pt-4 space-y-2 mt-2">
                           <div className="flex justify-between text-base font-medium text-stone-600">
                             <p>Subtotal</p>
-                            <p>${Number(totalCost).toFixed(2)}</p>
+                            <p>{formatCurrency(totalCost)}</p>
                           </div>
                           <div className="flex justify-between text-base font-medium text-stone-600">
                             <p>Taxes (5%)</p>
-                            <p>${(Number(totalCost) * 0.05).toFixed(2)}</p>
+                            <p>{formatCurrency(Number(totalCost) * 0.05)}</p>
                           </div>
                           <div className="flex justify-between text-lg font-bold text-stone-800">
                             <p>Total</p>
-                            <p>${(Number(totalCost) * 1.05).toFixed(2)}</p>
+                            <p>{formatCurrency(Number(totalCost) * 1.05)}</p>
                           </div>
                         </div>
 
