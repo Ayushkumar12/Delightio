@@ -3,7 +3,7 @@ import Home from './page/Home';
 import Admin from './page/Admin';
 import Order from './page/Order';
 import Navbar from './comp/Navbar';
-import Footer from './comp/Footer';
+// import Footer from './comp/Footer';
 import { BrowserRouter, Routes ,Route} from 'react-router-dom';
 import Auth from './Authentication/Auth';
 import { AuthProvider } from './Authentication/Authpro';

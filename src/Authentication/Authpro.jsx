@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    onAuthStateChanged(auth, async (user) => {
       setCurrentUser (user);
       if (user) {
         try {
@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ currentUser , userData, username, loading, error }}>
+    <AuthContext.Provider value={{ currentUser , userData, username, loading, error  }}>
       {loading ? <div>Loading...</div> : children}
     </AuthContext.Provider>
   );
