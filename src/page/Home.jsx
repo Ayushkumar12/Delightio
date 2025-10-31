@@ -1,21 +1,21 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback} from "react";
 import Footer from '../comp/Footer';
-import { initializeApp } from "firebase/app";
-import { getDatabase, ref, push, set } from "firebase/database";
+// import { initializeApp } from "firebase/app";
+// import { getDatabase,} from "firebase/database";
 // Note: fetching menu via backend API instead of Firebase client
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBnnUtNzcnw0UYR8ikFJptHkuzZFkvp4k4",
-  authDomain: "online-food-order-80833.firebaseapp.com",
-  databaseURL: "https://online-food-order-80833-default-rtdb.firebaseio.com",
-  projectId: "online-food-order-80833",
-  storageBucket: "online-food-order-80833.appspot.com",
-  messagingSenderId: "980243962311",
-  appId: "1:980243962311:web:6c80cf64470477b1bc21e2",
-  measurementId: "G-FF4PLG3S2T",
-};
-const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
+// const firebaseConfig = {
+//   apiKey: "AIzaSyBnnUtNzcnw0UYR8ikFJptHkuzZFkvp4k4",
+//   authDomain: "online-food-order-80833.firebaseapp.com",
+//   databaseURL: "https://online-food-order-80833-default-rtdb.firebaseio.com",
+//   projectId: "online-food-order-80833",
+//   storageBucket: "online-food-order-80833.appspot.com",
+//   messagingSenderId: "980243962311",
+//   appId: "1:980243962311:web:6c80cf64470477b1bc21e2",
+//   measurementId: "G-FF4PLG3S2T",
+// };
+// const app = initializeApp(firebaseConfig);
+// const database = getDatabase(app);
 const FALLBACK_MENU_IMAGE = "/lo.jpg";
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -36,14 +36,14 @@ function Home() {
   const [totalCost, setTotalCost] = useState(0);
   const [customerName, setCustomerName] = useState("");
   const [Table, setTable] = useState("");
-  const [show, setShow] = useState(false);
-  const [cartCount, setCartCount] = useState(0);
-  const [clickEffect, setClickEffect] = useState(false);
+  // const [show, setShow] = useState(false);
+  // const [cartCount, setCartCount] = useState(0);
+  // const [clickEffect, setClickEffect] = useState(false);
   
   
-  const Handleclick = () => {
-    setShow(!show);
-  };
+  // const Handleclick = () => {
+  //   setShow(!show);
+  // };
 
   useEffect(() => {
     const fetchMenu = async () => {
@@ -60,14 +60,20 @@ function Home() {
     fetchMenu();
   }, []);
 
+  
+  const calculateTotalCost = useCallback(() => {
+    const total = cartItems.reduce((acc, cartItem) => acc + Number(cartItem.dish_Price) * Number(cartItem.quantity), 0);
+    setTotalCost(total);
+  }, [cartItems]);
+  
   useEffect(() => {
     calculateTotalCost();
-  }, [cartItems]);
+  }, [calculateTotalCost]);
 
   const handleAddToCart = (menuItem) => {
-    setClickEffect(true);
-    setCartCount(prev => prev + 1);
-    setTimeout(() => setClickEffect(false), 300);
+    // setClickEffect(true);
+    // setCartCount(prev => prev + 1);
+    // setTimeout(() => setClickEffect(false), 300);
     const existingCartItem = cartItems.find(
       (cartItem) => cartItem.dish_Id === menuItem.dish_Id
     );
@@ -104,10 +110,6 @@ function Home() {
     }));
   };
 
-  const calculateTotalCost = () => {
-    const total = cartItems.reduce((acc, cartItem) => acc + Number(cartItem.dish_Price) * Number(cartItem.quantity), 0);
-    setTotalCost(total);
-  };
 
   const handleSubmitOrder = async () => {
     if (!customerName || !Table) {
