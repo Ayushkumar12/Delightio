@@ -38,9 +38,9 @@ export default function Navbar() {
       </div>
       <div className="flex items-center gap-4">
         <nav className="hidden md:flex items-center gap-6">
-          <a className="text-stone-600 hover:text-[var(--primary-color)] text-base font-medium leading-normal transition-colors" href="#menu">Menu</a>
-          <a className="text-stone-600 hover:text-[var(--primary-color)] text-base font-medium leading-normal transition-colors" href="#about">About</a>
-          <a className="text-stone-600 hover:text-[var(--primary-color)] text-base font-medium leading-normal transition-colors" href="#contact">Contact</a>
+          <a className="text-stone-600 hover:text-[var(--primary-color)] text-base font-medium leading-normal transition-colors" href="/">Menu</a>
+          <a className="text-stone-600 hover:text-[var(--primary-color)] text-base font-medium leading-normal transition-colors" href="/about">About</a>
+          <a className="text-stone-600 hover:text-[var(--primary-color)] text-base font-medium leading-normal transition-colors" href="/contact">Contact</a>
         </nav>
 
         <button className="md:hidden flex items-center justify-center size-10 rounded-md border border-stone-200 bg-white text-stone-600">

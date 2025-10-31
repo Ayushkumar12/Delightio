@@ -3,7 +3,7 @@
 - **framework**: React (Create React App)
 - **backend**: Express server with Firebase Realtime Database
 - **key frontend pages**:
-  - `src/page/Home.jsx`: customer ordering UI
+  - `src/page/Home.jsx`: customer ordering U
   - `src/page/Admin.jsx`: menu management
   - `src/page/Order.jsx`: order status
 - **backend entry**: `src/back/server.js` (runs on port 3001)

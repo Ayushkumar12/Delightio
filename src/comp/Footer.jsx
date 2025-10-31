@@ -9,9 +9,13 @@ export default function Footer() {
     <footer>
       <h4>Delightio</h4>
       <div className="sociolinks">
-        <a href=""><img src={face} alt="" /></a>
-        <a href=""><img src={insta} alt="" /></a>
+        <a href=""><img src={face} alt="Facebook" /></a>
+        <a href=""><img src={insta} alt="Instagram" /></a>
         {/* <a href="">thread</a> */}
+      </div>
+      <div className="footlinks">
+        <Link to="/about">About</Link>
+        <Link to="/contact">Contact</Link>
       </div>
       <hr />
       <p>2024 Delightio. All rights reserved.</p>
