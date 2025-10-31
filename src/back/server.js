@@ -51,6 +51,22 @@ function appendLog(entry) {
   }
 }
 
+app.get('/', (req, res) => {
+  get(child(dbRef, 'menu'))
+    .then((snapshot) => {
+      if (snapshot.exists()) {
+        res.json(snapshot.val());
+      } else {
+        res.status(404).json({ message: 'No menu items found' });
+      }
+    })
+    .catch((error) => {
+      console.error('Error retrieving menu:', error);
+      appendLog({ level: 'error', route: '/menu', message: 'Error retrieving menu', error: String(error), ip: req.ip });
+      res.status(500).json({ message: 'Error retrieving menu' });
+    });
+});
+
 app.get('/menu', (req, res) => {
   get(child(dbRef, 'menu'))
     .then((snapshot) => {
