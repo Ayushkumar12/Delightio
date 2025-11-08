@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Footer from "../comp/Footer";
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, onValue, push, remove } from "firebase/database";
 import {

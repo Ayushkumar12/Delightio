@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from "react";
-import Footer from '../comp/Footer';
 import Navbar from '../comp/Navbar';
 import { useLocation } from "react-router-dom";
 // import { initializeApp } from "firebase/app";
