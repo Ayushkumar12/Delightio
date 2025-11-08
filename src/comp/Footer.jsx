@@ -7,14 +7,14 @@ import "../asserts/style/footer.css";
 export default function Footer() {
   return (
     <footer>
-      {/* <h4>Delightio</h4>
+      <h4>Delightio</h4>
       <div className="sociolinks">
-        <a href=""><img src={face} alt="" /></a>
-        <a href=""><img src={insta} alt="" /></a>
+        <a href="">facebook</a>
+        <a href="">insta</a>
         <a href="">thread</a>
       </div>
       <hr />
-      <p>2024 Delightio. All rights reserved.</p> */}
+      <p>2024 Delightio. All rights reserved.</p>
     </footer>
   );
 }
