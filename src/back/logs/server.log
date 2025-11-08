@@ -14,3 +14,4 @@
 {"ts":"2025-11-08T06:21:46.076Z","level":"info","route":"/checkout","message":"Checkout session created","customerName":"jkj","stripeSessionId":"cs_test_a1RuSX1QhwxmdZ4BqYYe5BCVCzf7taeCZyZHpUp0sOOYB4tYzxKukliKFo","ip":"::1"}
 {"ts":"2025-11-08T06:31:16.317Z","level":"info","route":"/checkout","message":"Checkout session created","customerName":"ayush","stripeSessionId":"cs_test_b1myz7y7HXm8NW0iqfqZGzb7wWT281yfWD4JXuIKrD1WMYEO61zApoj60e","ip":"::1"}
 {"ts":"2025-11-08T06:58:50.311Z","level":"info","message":"Server started","port":3001}
+{"ts":"2025-11-08T13:34:37.978Z","level":"info","message":"Server started","port":3001}
