@@ -18,7 +18,7 @@ import { useLocation } from "react-router-dom";
 // const app = initializeApp(firebaseConfig);
 // const database = getDatabase(app);
 const FALLBACK_MENU_IMAGE = "/lo.jpg";
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || (typeof window !== "undefined" && window.location.hostname === "localhost" ? "http://localhost:3001" : "https://delightio.onrender.com");
+const API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || (typeof window !== "undefined" && window.location.hostname === "localhost" ? "http://localhost:3001" : "https://delightio.azurewebsites.net")).replace(/\/$/, "");
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
   style: "currency",
   currency: "INR",
