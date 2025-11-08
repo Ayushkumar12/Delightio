@@ -25,8 +25,32 @@ const dbRef = ref(database);
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const stripe = stripeSecretKey ? Stripe(stripeSecretKey) : null;
 const clientBaseUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+const normalizeOrigin = (origin) => origin.trim().replace(/\/+$/, '');
+const corsOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean)
+  .map(normalizeOrigin);
+const defaultOrigins = [
+  clientBaseUrl,
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'https://delightio.vercel.app'
+]
+  .filter(Boolean)
+  .map(normalizeOrigin);
+const allowedOrigins = Array.from(new Set([...defaultOrigins, ...corsOrigins]));
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(normalizeOrigin(origin))) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+};
 
-app.use(express.json(),cors());
+app.use(cors(corsOptions));
+app.use(express.json());
 
 // Honor X-Forwarded-For when behind proxies
 app.set('trust proxy', true);
