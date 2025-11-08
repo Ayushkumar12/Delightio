@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback} from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Footer from '../comp/Footer';
+import { useLocation } from "react-router-dom";
 // import { initializeApp } from "firebase/app";
 // import { getDatabase,} from "firebase/database";
 // Note: fetching menu via backend API instead of Firebase client
@@ -17,6 +18,7 @@ import Footer from '../comp/Footer';
 // const app = initializeApp(firebaseConfig);
 // const database = getDatabase(app);
 const FALLBACK_MENU_IMAGE = "/lo.jpg";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || (typeof window !== "undefined" && window.location.hostname === "localhost" ? "http://localhost:3001" : "https://delightio.onrender.com");
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
   style: "currency",
   currency: "INR",
@@ -36,6 +38,7 @@ function Home() {
   const [totalCost, setTotalCost] = useState(0);
   const [customerName, setCustomerName] = useState("");
   const [Table, setTable] = useState("");
+  const location = useLocation();
   // const [show, setShow] = useState(false);
   // const [cartCount, setCartCount] = useState(0);
   // const [clickEffect, setClickEffect] = useState(false);
@@ -48,7 +51,7 @@ function Home() {
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const res = await fetch("https://delightio.onrender.com/menu");
+        const res = await fetch(`${API_BASE_URL}/menu`);
         if (!res.ok) throw new Error(`Failed to fetch menu: ${res.status}`);
         const data = await res.json();
         const menuItemsArray = Array.isArray(data) ? data : Object.values(data || {});
@@ -69,6 +72,29 @@ function Home() {
   useEffect(() => {
     calculateTotalCost();
   }, [calculateTotalCost]);
+
+  useEffect(() => {
+    if (!location) {
+      return;
+    }
+    const params = new URLSearchParams(location.search);
+    const paymentStatus = params.get("payment");
+    if (!paymentStatus) {
+      return;
+    }
+    if (paymentStatus === "success") {
+      alert("Payment successful. Thank you!");
+      setCartItems([]);
+      setTotalCost(0);
+      setCustomerName("");
+      setTable("");
+    } else if (paymentStatus === "cancelled") {
+      alert("Payment was cancelled.");
+    }
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, [location]);
 
   const handleAddToCart = (menuItem) => {
     // setClickEffect(true);
@@ -120,25 +146,33 @@ function Home() {
       alert("No items in the cart");
       return;
     }
+    const successUrl = `${window.location.origin}?payment=success`;
+    const cancelUrl = `${window.location.origin}?payment=cancelled`;
     try {
-      const res = await fetch("https://delightio.onrender.com/orders", {
+      const res = await fetch(`${API_BASE_URL}/checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customerName,
           Table,
-          restaurantId: "12345",
           menuItems: cartItems,
-          totalCost,
+          totalCost: Number(totalCost),
+          successUrl,
+          cancelUrl,
         }),
       });
-      if (!res.ok) throw new Error("Failed to submit order");
-      alert("Order submitted successfully");
-      setCartItems([]);
-      setTotalCost(0);
+      if (!res.ok) {
+        throw new Error("Failed to initiate checkout");
+      }
+      const data = await res.json();
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("Missing checkout URL");
+      }
     } catch (error) {
       console.error(error);
-      alert("There was an error submitting your order. Please try again.");
+      alert("There was an error initiating payment. Please try again.");
     }
   };
 

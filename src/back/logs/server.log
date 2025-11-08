@@ -7,3 +7,6 @@
 {"ts":"2025-09-14T10:07:26.612Z","level":"info","route":"/orders","message":"Order submitted","customerName":"ayush","ip":"::1"}
 {"ts":"2025-10-01T15:16:03.318Z","level":"info","message":"Server started","port":3001}
 {"ts":"2025-10-31T06:13:23.301Z","level":"info","message":"Server started","port":3001}
+{"ts":"2025-11-04T15:47:07.660Z","level":"info","message":"Server started","port":3001}
+{"ts":"2025-11-04T15:52:05.871Z","level":"info","route":"/checkout","message":"Checkout session created","customerName":"ayush","stripeSessionId":"cs_test_b1CFAbGuJWRePz34tbGp84wrc5v5hFMG5Qus6dOitqJvvv6j1pKpdduHxb","ip":"::1"}
+{"ts":"2025-11-08T04:50:53.222Z","level":"info","message":"Server started","port":3001}

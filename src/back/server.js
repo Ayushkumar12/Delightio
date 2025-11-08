@@ -1,8 +1,10 @@
+require('dotenv').config();
 const express = require('express');
 const app = express();
 const fs = require('fs');
-const cors = require('cors')
+const cors = require('cors');
 const path = require('path');
+const Stripe = require('stripe');
 const { initializeApp } = require('firebase/app');
 const { getDatabase, ref, get, push, child } = require('firebase/database');
 
@@ -20,6 +22,9 @@ const firebaseConfig = {
 const appFirebase = initializeApp(firebaseConfig);
 const database = getDatabase(appFirebase);
 const dbRef = ref(database);
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+const stripe = stripeSecretKey ? Stripe(stripeSecretKey) : null;
+const clientBaseUrl = process.env.CLIENT_URL || 'http://localhost:3000';
 
 app.use(express.json(),cors());
 
@@ -118,6 +123,69 @@ app.post('/orders', (req, res) => {
         appendLog({ level: 'error', route: '/orders', message: 'Error submitting order', error: String(error), ip: req.ip });
         res.status(500).json({ message: 'Error submitting order' });
       });
+  }
+});
+
+app.post('/checkout', async (req, res) => {
+  const { customerName, Table, menuItems, successUrl, cancelUrl } = req.body || {};
+  if (!customerName || !Table || !Array.isArray(menuItems) || menuItems.length === 0) {
+    appendLog({ level: 'warn', route: '/checkout', message: 'Invalid checkout data', body: req.body, ip: req.ip });
+    return res.status(400).json({ message: 'Invalid checkout data' });
+  }
+  if (!stripe) {
+    appendLog({ level: 'error', route: '/checkout', message: 'Stripe secret key not configured', ip: req.ip });
+    return res.status(500).json({ message: 'Payment service unavailable' });
+  }
+  try {
+    let totalCost = 0;
+    const lineItems = menuItems.map((item) => {
+      const name = String(item.dish_Name || '').trim();
+      const price = Number(item.dish_Price);
+      const quantity = Number(item.quantity) || 1;
+      if (!name || Number.isNaN(price) || price <= 0 || Number.isNaN(quantity) || quantity <= 0) {
+        const err = new Error('INVALID_LINE_ITEM');
+        err.details = { name, price, quantity };
+        throw err;
+      }
+      totalCost += price * quantity;
+      return {
+        price_data: {
+          currency: 'inr',
+          product_data: { name },
+          unit_amount: Math.round(price * 100),
+        },
+        quantity,
+      };
+    });
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      payment_method_types: ['card'],
+      line_items: lineItems,
+      success_url: successUrl || `${clientBaseUrl}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: cancelUrl || `${clientBaseUrl}?payment=cancelled`,
+      metadata: {
+        customerName: String(customerName),
+        table: String(Table),
+      },
+    });
+    await push(child(dbRef, 'orders'), {
+      customerName,
+      Table,
+      menuItems,
+      totalCost,
+      paymentStatus: 'pending',
+      stripeSessionId: session.id,
+    });
+    appendLog({ level: 'info', route: '/checkout', message: 'Checkout session created', customerName, stripeSessionId: session.id, ip: req.ip });
+    res.json({ url: session.url, sessionId: session.id });
+  } catch (error) {
+    if (error.message === 'INVALID_LINE_ITEM' && error.details) {
+      appendLog({ level: 'warn', route: '/checkout', message: 'Invalid line item', details: error.details, ip: req.ip });
+      return res.status(400).json({ message: 'Invalid menu items' });
+    }
+    console.error('Error creating checkout session:', error);
+    appendLog({ level: 'error', route: '/checkout', message: 'Error creating checkout session', error: String(error), ip: req.ip });
+    res.status(500).json({ message: 'Error creating checkout session' });
   }
 });
 
