@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import Navbar from "../comp/Navbar";
 
 export default function Contact() {
-  const [submitted, setSubmitted] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -11,14 +10,13 @@ export default function Contact() {
     guests: "",
     message: "",
   });
+  const [submitting, setSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState({ type: "", message: "" });
+  const API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || (typeof window !== "undefined" && window.location.hostname === "localhost" ? "http://localhost:3001" : "https://delightio.onrender.com")).replace(/\/$/, "");
   const channels = [
     { title: "Reservations", value: "+91 88000 11223", detail: "Table bookings and tasting menus" },
     { title: "Catering", value: "+91 88000 44556", detail: "Events, launches, and celebrations" },
     { title: "Concierge", value: "hello@delightio.com", detail: "General enquiries and feedback" },
-  ];
-  const hours = [
-    { label: "Weekdays", value: "11:00 AM – 11:00 PM" },
-    { label: "Weekends", value: "11:00 AM – 12:00 AM" },
   ];
   const topics = [
     { value: "reservation", label: "Reservation" },
@@ -33,10 +31,34 @@ export default function Contact() {
     setFormData((previous) => ({ ...previous, [name]: value }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    setSubmitted(true);
-    setFormData({ name: "", email: "", phone: "", topic: "reservation", guests: "", message: "" });
+    setSubmitting(true);
+    setFeedback({ type: "", message: "" });
+    try {
+      const response = await fetch(`${API_BASE_URL}/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        const errorMessage = data?.message || "Unable to submit your request right now.";
+        throw new Error(errorMessage);
+      }
+      setFeedback({
+        type: "success",
+        message: "Thank you. Our team will confirm the next steps shortly.",
+      });
+      setFormData({ name: "", email: "", phone: "", topic: "reservation", guests: "", message: "" });
+    } catch (error) {
+      setFeedback({
+        type: "error",
+        message: error.message || "Unable to submit your request right now.",
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -139,13 +161,16 @@ export default function Contact() {
                   />
                 </label>
                 <button
-                  className="w-full bg-[var(--primary-color)] text-white rounded-xl px-5 py-3 text-sm font-semibold tracking-wide hover:bg-opacity-90 transition-colors"
+                  className={`w-full bg-[var(--primary-color)] text-white rounded-xl px-5 py-3 text-sm font-semibold tracking-wide transition-colors ${submitting ? "opacity-70 cursor-not-allowed" : "hover:bg-opacity-90"}`}
                   type="submit"
+                  disabled={submitting}
                 >
-                  Submit request
+                  {submitting ? "Sending..." : "Submit request"}
                 </button>
-                {submitted ? (
-                  <p className="text-sm text-green-600 text-center">Thank you. Our team will confirm the next steps shortly.</p>
+                {feedback.message ? (
+                  <p className={`text-sm text-center ${feedback.type === "success" ? "text-green-600" : "text-red-600"}`}>
+                    {feedback.message}
+                  </p>
                 ) : null}
               </form>
             </div>

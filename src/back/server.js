@@ -150,6 +150,41 @@ app.post('/orders', (req, res) => {
   }
 });
 
+app.post('/contact', (req, res) => {
+  const {
+    name,
+    email,
+    phone,
+    topic,
+    guests,
+    message,
+  } = req.body || {};
+  if (!name || !email || !message) {
+    appendLog({ level: 'warn', route: '/contact', message: 'Invalid contact submission', body: req.body, ip: req.ip });
+    return res.status(400).json({ message: 'Name, email, and message are required' });
+  }
+  const payload = {
+    name: String(name).trim(),
+    email: String(email).trim().toLowerCase(),
+    phone: phone ? String(phone).trim() : '',
+    topic: topic ? String(topic).trim() : 'general',
+    guests: guests ? String(guests).trim() : '',
+    message: String(message).trim(),
+    submittedAt: Date.now(),
+    userAgent: req.headers['user-agent'] || '',
+    ip: req.ip,
+  };
+  push(child(dbRef, 'contactRequests'), payload)
+    .then((refSnapshot) => {
+      appendLog({ level: 'info', route: '/contact', message: 'Contact request stored', key: refSnapshot.key, email: payload.email, ip: req.ip });
+      res.json({ message: 'Thanks for contacting Delightio' });
+    })
+    .catch((error) => {
+      appendLog({ level: 'error', route: '/contact', message: 'Failed to store contact request', error: String(error), ip: req.ip });
+      res.status(500).json({ message: 'Could not store contact request' });
+    });
+});
+
 app.post('/checkout', async (req, res) => {
   const { customerName, Table, menuItems, successUrl, cancelUrl } = req.body || {};
   if (!customerName || !Table || !Array.isArray(menuItems) || menuItems.length === 0) {
