@@ -1,8 +1,7 @@
 import '../asserts/style/auth.css';
 import React, { useState } from "react";
 import { initializeApp } from "firebase/app";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
-import { getDatabase, ref, set } from "firebase/database"; // Use set instead of push
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, fetchSignInMethodsForEmail } from "firebase/auth";
 import { useNavigate } from 'react-router-dom';
 
 const firebaseConfig = {
@@ -18,66 +17,59 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app); // Initialize Firebase Authentication
-const database = getDatabase(app); // Initialize Firebase Database
+const auth = getAuth(app);
+const ADMIN_EMAIL = (process.env.REACT_APP_ADMIN_EMAIL || "admin@delightio.com").toLowerCase();
+const ADMIN_PASSWORD = process.env.REACT_APP_ADMIN_PASSWORD || "delightio-admin";
 
 const Auth = () => {
-    const [activeTab, setActiveTab] = useState('login');
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [displayName, setName] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-    const navigate = useNavigate(); // Corrected useNavigate initialization
+    const navigate = useNavigate();
   
+    const handleAuthSuccess = (userCredential) => {
+        const { user } = userCredential;
+        sessionStorage.setItem("Auth Token", user.refreshToken);
+        setError("");
+        setEmail("");
+        setPassword("");
+        alert("Login successful!");
+        navigate('/admin');
+    };
+
     const handleLogin = async (e) => {
         e.preventDefault();
-        try {
-            setEmail("");
-            setPassword("");
-            setError("");
-            await signInWithEmailAndPassword(auth, email, password)
-            .then((userCredential) => {
-                const user = userCredential.user;
-                sessionStorage.setItem("Auth Token", user.refreshToken);
-            })
-            .catch((error) => {
-                console.error("Error signing in:", error);
-            });
-            alert("Login successful!");
-            navigate('/admin');
-        } catch (error) {
-            setError(error.message);
-        }
-    };
-
-    const handleTabClick = (tab) => {
-        setActiveTab(tab);
-    };
-
-    const handleSignup = async (e) => {
-        e.preventDefault();
-        setLoading(true);
         setError("");
+        const normalizedEmail = email.trim().toLowerCase();
+        if (normalizedEmail !== ADMIN_EMAIL) {
+            setError("Unauthorized access");
+            return;
+        }
+        if (password !== ADMIN_PASSWORD) {
+            setError("Invalid credentials.");
+            return;
+        }
+        setLoading(true);
         try {
-            if (!displayName || !email) {
-                alert("Please enter name and email");
+            const methods = await fetchSignInMethodsForEmail(auth, normalizedEmail);
+            if (methods.length === 0) {
+                const userCredential = await createUserWithEmailAndPassword(
+                    auth,
+                    normalizedEmail,
+                    ADMIN_PASSWORD
+                );
+                handleAuthSuccess(userCredential);
                 return;
-            } else {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-                const userRef = ref(database, `Users/${user.uid}`);
-                await set(userRef, {
-                    displayName,
-                    email,
-                });
-                setEmail("");
-                setPassword("");
-                alert("User registered successfully");
-                navigate('/admin'); // Navigate to the admin page after successful signup
             }
+            const userCredential = await signInWithEmailAndPassword(
+                auth,
+                normalizedEmail,
+                ADMIN_PASSWORD
+            );
+            handleAuthSuccess(userCredential);
         } catch (error) {
-            setError(getErrorMessage(error.code)); // Handle error
+            setError(getErrorMessage(error.code));
         } finally {
             setLoading(false);
         }
@@ -85,12 +77,18 @@ const Auth = () => {
 
     const getErrorMessage = (code) => {
         switch (code) {
-            case 'auth/email-already-in-use':
-                return "This email address is already in use.";
             case 'auth/invalid-email':
                 return "The email address is not valid.";
-            case 'auth/weak-password':
-                return "The password is too weak.";
+            case 'auth/operation-not-allowed':
+                return "Enable Email/Password sign-in in Firebase.";
+            case 'auth/wrong-password':
+                return "Invalid credentials.";
+            case 'auth/user-not-found':
+                return "Admin account not found.";
+            case 'auth/too-many-requests':
+                return "Too many attempts. Try again later.";
+            case 'auth/network-request-failed':
+                return "Network error. Check your connection.";
             default:
                 return "An unexpected error occurred. Please try again.";
         }
@@ -100,63 +98,35 @@ const Auth = () => {
         <div className="body">
             <div className="container">
                 <div className="form-container">
-                    <div className="tabs">
-                        <div 
-                            className={`tab ${activeTab === 'login' ? 'active' : ''}`} 
-                            onClick={() => handleTabClick('login')}
-                        >
-                            Login
-                        </div>
-                        <div 
-                            className={`tab ${activeTab === 'signup' ? 'active' : ''}`} 
-                            onClick={() => handleTabClick('signup')}
-                        >
-                            Sign Up
-                        </div>
-                    </div>
-
-                    {/* Login Form */}
-                    <form id="login-form" className={`form ${activeTab === 'login' ? 'active' : ''}`} onSubmit={handleLogin}>
-                        <h2 className="form-title">Welcome Back</h2>
+                    <h2 className="form-title">Admin Login</h2>
+                    <form className="form active" onSubmit={handleLogin}>
                         <div className="form-group">
                             <label htmlFor="login-email">Email</label>
-                            <input type="email" id="login-email" className="form-control" placeholder="Enter your email" value={email}
+                            <input
+                                type="email"
+                                id="login-email"
+                                className="form-control"
+                                placeholder="Enter your email"
+                                value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                required />
+                                required
+                            />
                         </div>
                         <div className="form-group">
                             <label htmlFor="login-password">Password</label>
-                            <input type="password" id="login-password" className="form-control" placeholder="Enter your password" value={password}
+                            <input
+                                type="password"
+                                id="login-password"
+                                className="form-control"
+                                placeholder="Enter your password"
+                                value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                required />
+                                required
+                            />
                         </div>
-                        <button type="submit" className="btn">Login</button>
-                        {error && <p style={{ color: "red" }}>{error}</p>}
-
-                    </form>
-
-                    {/* Signup Form */}
-                    <form id="signup-form" className={`form ${activeTab === 'signup' ? 'active' : ''}`} onSubmit={handleSignup}>
-                        <h2 className="form-title">Create Account</h2>
-                        <div className="form-group">
-                            <label htmlFor="signup-name">Full Name</label>
-                            <input type="text" id="signup-name" className="form-control" placeholder="Enter your full name" value={displayName}
-                                onChange={(e) => setName(e.target.value)}
-                                required />
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="signup-email">Email</label>
-                            <input type="email" id="signup-email" className="form-control" placeholder="Enter your email" value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required />
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="signup-password">Password</label>
-                            <input type="password" id="signup-password" className="form-control" placeholder="Create a password" value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required />
-                        </div>
-                        <button type="submit" className="btn" disabled={loading}>Sign Up</button>
+                        <button type="submit" className="btn" disabled={loading}>
+                            {loading ? "Signing In..." : "Login"}
+                        </button>
                         {error && <p style={{ color: "red" }}>{error}</p>}
                     </form>
                 </div>

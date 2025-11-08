@@ -41,10 +41,19 @@ export default function Admin() {
   const [menu, setmenu] = useState([]);
   const [orders, setOrders] = useState([]);
   const [image, setImage] = useState(null);
+  const [navOpen, setNavOpen] = useState(false);
   const { username } = useAuth();
 
   const generateUniqueId = () => {
     return `dish_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  };
+
+  const handleNavToggle = () => {
+    setNavOpen((previous) => !previous);
+  };
+
+  const handleNavLinkClick = () => {
+    setNavOpen(false);
   };
 
   const handleSubmitMenu = async (event) => {
@@ -90,6 +99,16 @@ export default function Admin() {
       alert("Error deleting menu:");
     }
   };
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        setNavOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const menuRef = ref(database, "menu");
@@ -190,15 +209,33 @@ export default function Admin() {
             <strong>Admin Console</strong>
           </div>
         </div>
-        <nav className="admin-nav">
-          <a href="#dashboard">Dashboard</a>
-          <a href="#orders">Order</a>
-        </nav>
-        <div className="admin-user">
-          <span className="admin-user-avatar">
-            {(username && username.charAt(0).toUpperCase()) || "A"}
-          </span>
-          <span>{username || "Admin"}</span>
+        <button
+          type="button"
+          className={`admin-nav-toggle ${navOpen ? "is-active" : ""}`}
+          onClick={handleNavToggle}
+          aria-expanded={navOpen}
+          aria-controls="admin-nav"
+          aria-label="Toggle navigation"
+        >
+          <span className="admin-nav-toggle-line admin-nav-toggle-line-horizontal"></span>
+          <span className="admin-nav-toggle-line admin-nav-toggle-line-vertical"></span>
+        </button>
+        <div className="admin-header-controls">
+          <nav
+            id="admin-nav"
+            className={`admin-nav ${navOpen ? "is-open" : ""}`}
+          >
+            <a href="#dashboard" onClick={handleNavLinkClick}>
+              Dashboard
+            </a>
+            <a href="#orders" onClick={handleNavLinkClick}>
+              Order
+            </a>
+            <div className="admin-user">
+              <span>{username || "Admin"}</span>
+            </div>
+          </nav>
+          
         </div>
       </header>
       <main className="admin-main">
@@ -219,82 +256,86 @@ export default function Admin() {
             </div>
           </div>
           <div className="admin-panels">
-            <form className="admin-form" onSubmit={handleSubmitMenu}>
-              <h3>Add new dish</h3>
-              <label>
-                Dish Name
-                <input
-                  type="text"
-                  placeholder="Eg. Paneer Tikka"
-                  value={dish_Name}
-                  onChange={(e) => setDish_Name(e.target.value)}
-                  required
-                />
-              </label>
-              <label>
-                Price
-                <input
-                  type="number"
-                  placeholder="Eg. 299"
-                  min="0"
-                  step="0.01"
-                  value={dish_Price}
-                  onChange={(e) => setDish_Price(e.target.value)}
-                  required
-                />
-              </label>
-              <label className="admin-upload">
-                Dish Photo
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setImage(e.target.files?.[0] || null)}
-                  required
-                />
-              </label>
-              <button type="submit">Save dish</button>
-            </form>
-            <div className="admin-menu">
-              <div className="admin-section-header">
-                <div>
-                  <h3>Menu catalogue</h3>
-                  <p>Review and manage live dishes.</p>
+            <section className="admin-panel admin-panel-form">
+              <form className="admin-form" onSubmit={handleSubmitMenu}>
+                <h3>Add new dish</h3>
+                <label>
+                  Dish Name
+                  <input
+                    type="text"
+                    placeholder="Eg. Paneer Tikka"
+                    value={dish_Name}
+                    onChange={(e) => setDish_Name(e.target.value)}
+                    required
+                  />
+                </label>
+                <label>
+                  Price
+                  <input
+                    type="number"
+                    placeholder="Eg. 299"
+                    min="0"
+                    step="0.01"
+                    value={dish_Price}
+                    onChange={(e) => setDish_Price(e.target.value)}
+                    required
+                  />
+                </label>
+                <label className="admin-upload">
+                  Dish Photo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setImage(e.target.files?.[0] || null)}
+                    required
+                  />
+                </label>
+                <button type="submit">Save dish</button>
+              </form>
+            </section>
+            <section className="admin-panel admin-panel-menu">
+              <div className="admin-menu">
+                <div className="admin-section-header">
+                  <div>
+                    <h3>Menu catalogue</h3>
+                    <p>Review and manage live dishes.</p>
+                  </div>
+                  <span className="admin-pill">{menu.length}</span>
                 </div>
-                <span className="admin-pill">{menu.length}</span>
-              </div>
-              <ul className="admin-menu-grid">
-                {sortedMenu.length === 0 ? (
-                  <li className="admin-empty">
-                    No dishes yet. Start by adding your first item.
-                  </li>
-                ) : (
-                  sortedMenu.map((menuItem) => (
-                    <li key={menuItem.key} className="admin-menu-card">
-                      <img
-                        src={menuItem.imageUrl || FALLBACK_IMAGE}
-                        alt={menuItem.dish_Name}
-                        onError={(event) => {
-                          event.currentTarget.src = FALLBACK_IMAGE;
-                        }}
-                      />
-                      <div className="admin-menu-content">
-                        <div className="admin-menu-headline">
-                          <h4>{menuItem.dish_Name}</h4>
-                          <span>{formatCurrency(menuItem.dish_Price)}</span>
-                        </div>
-                        <p>{menuItem.dish_Id}</p>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveMenuItem(menuItem.key)}
-                        >
-                          Remove
-                        </button>
-                      </div>
+                <ul className="admin-menu-grid">
+                  {sortedMenu.length === 0 ? (
+                    <li className="admin-empty">
+                      No dishes yet. Start by adding your first item.
                     </li>
-                  ))
-                )}
-              </ul>
-            </div>
+                  ) : (
+                    sortedMenu.map((menuItem) => (
+                      <li key={menuItem.key} className="admin-menu-card">
+                        <img
+                          src={menuItem.imageUrl || FALLBACK_IMAGE}
+                          alt={menuItem.dish_Name}
+                          onError={(event) => {
+                            event.currentTarget.src = FALLBACK_IMAGE;
+                          }}
+                        />
+                        <div className="admin-menu-content">
+                          <div className="admin-menu-headline">
+                            <h4>{menuItem.dish_Name}</h4>
+                            <span>{formatCurrency(menuItem.dish_Price)}</span>
+                          </div>
+                          <p>{menuItem.dish_Id}</p>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveMenuItem(menuItem.key)}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </div>
+            </section>
           </div>
         </section>
         <section id="orders" className="admin-orders">
@@ -364,7 +405,6 @@ export default function Admin() {
           </div>
         </section>
       </main>
-      <Footer />
     </section>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Footer from '../comp/Footer';
+import Navbar from '../comp/Navbar';
 import { useLocation } from "react-router-dom";
 // import { initializeApp } from "firebase/app";
 // import { getDatabase,} from "firebase/database";
@@ -179,6 +180,8 @@ function Home() {
 
   return (
     <section>
+      <Navbar/>
+      
       <main className="bg-stone-50" style={{ fontFamily: 'Epilogue, Noto Sans, sans-serif' }}>
         <div className="relative flex min-h-screen w-full flex-col">
           {/* Header */}
