@@ -64,21 +64,51 @@ Delightio is a web-based ordering experience for in-restaurant diners. It combin
 
 ## Project Structure
 
-```
-Delightio/
-├── public/                  # Static assets and fallback images
+delightio-1/
+├── public/                 # Static assets
+│   ├── favicon.ico
+│   ├── index.html
+│   ├── lo.jpg              # Logo image
+│   ├── lo.png
+│   ├── logo192.png
+│   ├── logo512.png
+│   ├── manifest.json
+│   └── robots.txt
 ├── src/
-│   ├── Authentication/      # Auth context, protected routes
-│   ├── asserts/             # Local imagery and styles
-│   ├── back/
-│   │   ├── logs/            # JSONL server logs
-│   │   └── server.js        # Express + Firebase API
-│   ├── comp/                # Shared UI components (Navbar, Footer)
-│   ├── page/                # Route-level views (Home, Admin, Order)
-│   ├── App.js               # Client routing
-│   └── index.js             # React entry point
-├── package.json
-└── README.md
+│   ├── asserts/            # Assets like icons and styles
+│   │   ├── icon/
+│   │   ├── style/
+│   │   └── back.avif
+│   ├── Authentication/     # Auth components
+│   │   ├── Auth.jsx
+│   │   ├── Authpro.jsx
+│   │   └── Protectroute.jsx
+│   ├── back/               # Backend server
+│   │   ├── logs/           # Server logs
+│   │   └── server.js       # Express server
+│   ├── comp/               # Reusable components
+│   │   ├── Footer.jsx
+│   │   └── Navbar.jsx
+│   ├── page/               # Page components
+│   │   ├── About.jsx
+│   │   ├── Admin.jsx
+│   │   ├── Contact.jsx
+│   │   ├── Home.jsx
+│   │   └── Order.jsx
+│   ├── App.css
+│   ├── App.js              # Main app component
+│   ├── App.test.js
+│   ├── index.css
+│   ├── index.js            # App entry point
+│   ├── logo.svg
+│   ├── reportWebVitals.js
+│   ├── setupTests.js
+│   └── serviceWorker.js
+├── .gitignore
+├── package-lock.json
+├── package.json            # Project dependencies and scripts
+└── README.md               # This file
+
 ```
 
 ## Usage Notes
