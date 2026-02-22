@@ -61,10 +61,15 @@ export default function Order() {
               <h3>{order.Table}{index}</h3>
               <h3>{order.customerName}</h3>
               <ul className="list">
-                {order.menuItems.map((order, index) => (
-                  <li key={order.dish_Id}>
+                {(Array.isArray(order.menuItems)
+                  ? order.menuItems
+                  : order.menuItems
+                  ? Object.values(order.menuItems)
+                  : []
+                ).map((item, index) => (
+                  <li key={item.dish_Id ?? index}>
                     <p>
-                      {order.dish_Name} {order.quantity}
+                      {item.dish_Name} {item.quantity}
                     </p>
                   </li>
                 ))}

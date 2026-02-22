@@ -1,8 +1,7 @@
 // src/Authentication/AuthContext.js
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { initializeApp } from "firebase/app";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { getDatabase, ref, get } from 'firebase/database';
+import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 
 
 // Firebase configuration
@@ -20,12 +19,12 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getDatabase(app); // Initialize Firestore
+const ADMIN_EMAIL = (process.env.REACT_APP_ADMIN_EMAIL || "admin@delightio.com").toLowerCase();
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [currentUser , setCurrentUser ] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [username, setUsername] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -33,32 +32,46 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser (user);
-      if (user) {
-        try {
-          const userDoc = ref(db, `Users/${user.uid}`);
-          const userSnapshot = await get(userDoc);
-          if (userSnapshot.exists()) {
-            const data = userSnapshot.val();
-            setUserData(data);
-            setUsername(data.displayName)
-            
-            console.log("User  Data:", data); // Log the user data
-          } else {
-            setError("No such user!");
-          }
-        } catch (err) {
-          setError(err.message);
+      try {
+        if (!user) {
+          setCurrentUser(null);
+          setUserData(null);
+          setUsername(null);
+          setError(null);
+          return;
         }
-      } else {
-        setUserData(null);
+
+        const normalizedEmail = (user.email || "").toLowerCase();
+
+        if (normalizedEmail !== ADMIN_EMAIL) {
+          setError("Unauthorized access");
+          await signOut(auth);
+          setCurrentUser(null);
+          setUserData(null);
+          setUsername(null);
+          return;
+        }
+
+        setCurrentUser(user);
+        const data = {
+          displayName: user.displayName || "Admin",
+          email: user.email || "",
+        };
+        setUserData(data);
+        setUsername(data.displayName);
+        setError(null);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
+
+    return () => unsubscribe();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ currentUser , userData, username, loading, error }}>
+    <AuthContext.Provider value={{ currentUser, userData, username, loading, error }}>
       {loading ? <div>Loading...</div> : children}
     </AuthContext.Provider>
   );

@@ -1,22 +1,24 @@
-import React, { useState, useEffect } from "react";
-import Footer from '../comp/Footer';
-import { initializeApp } from "firebase/app";
-import { getDatabase, ref, push, set } from "firebase/database";
+import React, { useState, useEffect, useCallback } from "react";
+import Navbar from '../comp/Navbar';
+import { useLocation } from "react-router-dom";
+// import { initializeApp } from "firebase/app";
+// import { getDatabase,} from "firebase/database";
 // Note: fetching menu via backend API instead of Firebase client
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBnnUtNzcnw0UYR8ikFJptHkuzZFkvp4k4",
-  authDomain: "online-food-order-80833.firebaseapp.com",
-  databaseURL: "https://online-food-order-80833-default-rtdb.firebaseio.com",
-  projectId: "online-food-order-80833",
-  storageBucket: "online-food-order-80833.appspot.com",
-  messagingSenderId: "980243962311",
-  appId: "1:980243962311:web:6c80cf64470477b1bc21e2",
-  measurementId: "G-FF4PLG3S2T",
-};
-const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
+// const firebaseConfig = {
+//   apiKey: "AIzaSyBnnUtNzcnw0UYR8ikFJptHkuzZFkvp4k4",
+//   authDomain: "online-food-order-80833.firebaseapp.com",
+//   databaseURL: "https://online-food-order-80833-default-rtdb.firebaseio.com",
+//   projectId: "online-food-order-80833",
+//   storageBucket: "online-food-order-80833.appspot.com",
+//   messagingSenderId: "980243962311",
+//   appId: "1:980243962311:web:6c80cf64470477b1bc21e2",
+//   measurementId: "G-FF4PLG3S2T",
+// };
+// const app = initializeApp(firebaseConfig);
+// const database = getDatabase(app);
 const FALLBACK_MENU_IMAGE = "/lo.jpg";
+const API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || (typeof window !== "undefined" && window.location.hostname === "localhost" ? "http://localhost:3001" : "https://delightio.onrender.com")).replace(/\/$/, "");
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
   style: "currency",
   currency: "INR",
@@ -36,19 +38,20 @@ function Home() {
   const [totalCost, setTotalCost] = useState(0);
   const [customerName, setCustomerName] = useState("");
   const [Table, setTable] = useState("");
-  const [show, setShow] = useState(false);
-  const [cartCount, setCartCount] = useState(0);
-  const [clickEffect, setClickEffect] = useState(false);
+  const location = useLocation();
+  // const [show, setShow] = useState(false);
+  // const [cartCount, setCartCount] = useState(0);
+  // const [clickEffect, setClickEffect] = useState(false);
   
   
-  const Handleclick = () => {
-    setShow(!show);
-  };
+  // const Handleclick = () => {
+  //   setShow(!show);
+  // };
 
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        const res = await fetch("https://delightio.onrender.com/menu");
+        const res = await fetch(`${API_BASE_URL}/menu`);
         if (!res.ok) throw new Error(`Failed to fetch menu: ${res.status}`);
         const data = await res.json();
         const menuItemsArray = Array.isArray(data) ? data : Object.values(data || {});
@@ -60,14 +63,43 @@ function Home() {
     fetchMenu();
   }, []);
 
+  
+  const calculateTotalCost = useCallback(() => {
+    const total = cartItems.reduce((acc, cartItem) => acc + Number(cartItem.dish_Price) * Number(cartItem.quantity), 0);
+    setTotalCost(total);
+  }, [cartItems]);
+  
   useEffect(() => {
     calculateTotalCost();
-  }, [cartItems]);
+  }, [calculateTotalCost]);
+
+  useEffect(() => {
+    if (!location) {
+      return;
+    }
+    const params = new URLSearchParams(location.search);
+    const paymentStatus = params.get("payment");
+    if (!paymentStatus) {
+      return;
+    }
+    if (paymentStatus === "success") {
+      alert("Payment successful. Thank you!");
+      setCartItems([]);
+      setTotalCost(0);
+      setCustomerName("");
+      setTable("");
+    } else if (paymentStatus === "cancelled") {
+      alert("Payment was cancelled.");
+    }
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, [location]);
 
   const handleAddToCart = (menuItem) => {
-    setClickEffect(true);
-    setCartCount(prev => prev + 1);
-    setTimeout(() => setClickEffect(false), 300);
+    // setClickEffect(true);
+    // setCartCount(prev => prev + 1);
+    // setTimeout(() => setClickEffect(false), 300);
     const existingCartItem = cartItems.find(
       (cartItem) => cartItem.dish_Id === menuItem.dish_Id
     );
@@ -104,10 +136,6 @@ function Home() {
     }));
   };
 
-  const calculateTotalCost = () => {
-    const total = cartItems.reduce((acc, cartItem) => acc + Number(cartItem.dish_Price) * Number(cartItem.quantity), 0);
-    setTotalCost(total);
-  };
 
   const handleSubmitOrder = async () => {
     if (!customerName || !Table) {
@@ -118,31 +146,41 @@ function Home() {
       alert("No items in the cart");
       return;
     }
+    const successUrl = `${window.location.origin}?payment=success`;
+    const cancelUrl = `${window.location.origin}?payment=cancelled`;
     try {
-      const res = await fetch("https://delightio.onrender.com/orders", {
+      const res = await fetch(`${API_BASE_URL}/checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customerName,
           Table,
-          restaurantId: "12345",
           menuItems: cartItems,
-          totalCost,
+          totalCost: Number(totalCost),
+          successUrl,
+          cancelUrl,
         }),
       });
-      if (!res.ok) throw new Error("Failed to submit order");
-      alert("Order submitted successfully");
-      setCartItems([]);
-      setTotalCost(0);
+      if (!res.ok) {
+        throw new Error("Failed to initiate checkout");
+      }
+      const data = await res.json();
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("Missing checkout URL");
+      }
     } catch (error) {
       console.error(error);
-      alert("There was an error submitting your order. Please try again.");
+      alert("There was an error initiating payment. Please try again.");
     }
   };
 
 
   return (
     <section>
+      <Navbar/>
+      
       <main className="bg-stone-50" style={{ fontFamily: 'Epilogue, Noto Sans, sans-serif' }}>
         <div className="relative flex min-h-screen w-full flex-col">
           {/* Header */}
@@ -315,7 +353,6 @@ function Home() {
           </div>
         </div>
       </main>
-      <Footer/>
     </section>
   );
 }

@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Footer from "../comp/Footer";
-import Navbar from "../comp/Navbar";
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, onValue, push, remove } from "firebase/database";
 import {
@@ -26,16 +24,35 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const storage = getStorage(app);
+const currencyFormatter = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+const formatCurrency = (value) =>
+  currencyFormatter.format(Number(value) || 0);
+const FALLBACK_IMAGE = "/lo.jpg";
 
 export default function Admin() {
   const [dish_Name, setDish_Name] = useState("");
   const [dish_Price, setDish_Price] = useState("");
   const [menu, setmenu] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [image, setImage] = useState(null);
+  const [navOpen, setNavOpen] = useState(false);
   const { username } = useAuth();
 
   const generateUniqueId = () => {
     return `dish_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  };
+
+  const handleNavToggle = () => {
+    setNavOpen((previous) => !previous);
+  };
+
+  const handleNavLinkClick = () => {
+    setNavOpen(false);
   };
 
   const handleSubmitMenu = async (event) => {
@@ -61,6 +78,7 @@ export default function Admin() {
       });
 
       alert("Menu submitted successfully");
+      event.target.reset();
       setDish_Name("");
       setDish_Price("");
       setImage(null);
@@ -74,95 +92,318 @@ export default function Admin() {
     try {
       const menuRef = ref(database, `menu/${firebaseKey}`);
       await remove(menuRef);
-      console.log(`Menu item ${firebaseKey} deleted successfully`);
       alert(`Menu item deleted successfully`);
     } catch (error) {
       console.error("Error deleting menu:", error);
-      alert("Error deleting menu:", error);
+      alert("Error deleting menu:");
     }
   };
 
   useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        setNavOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
     const menuRef = ref(database, "menu");
-    onValue(menuRef, (data) => {
+    const unsubscribe = onValue(menuRef, (data) => {
       if (data.exists()) {
-        const menuItemsArray = Object.entries(data.val()).map(
-          ([key, value]) => ({
-            key,...value,
-          })
-        );
+        const menuItemsArray = Object.entries(data.val()).map(([key, value]) => ({
+          key,
+          ...value,
+        }));
         setmenu(menuItemsArray);
       } else {
         setmenu([]);
-        console.log("No menu items found");
       }
     });
+    return () => unsubscribe();
   }, []);
 
-  return (
-    <section>
-      <section className="start">
-        <Navbar />
-        <div className="top">
-          <div className="greet">
-            <h2>Hello {username}, Welcome back</h2>
-          </div>
-          <form className="add" onSubmit={handleSubmitMenu}>
-            <label>
-              <h4>Enter Dish_Name</h4>
-              <input
-                type="text"
-                placeholder="Dish_Name"
-                value={dish_Name}
-                onChange={(e) => setDish_Name(e.target.value)}
-                required
-              />
-            </label>
-            <label>
-              <h4>Enter Dish_Price</h4>
-              <input
-                type="number"
-                placeholder="Dish_Price"
-                value={dish_Price}
-                onChange={(e) => setDish_Price(e.target.value)}
-                required
-              />
-            </label>
-            <label>
-              <h4>Upload Image</h4>
-              <input
-                type="file"
-                onChange={(e) => setImage(e.target.files[0])}
-                required
-              />
-            </label>
-            <button className="dish" type="submit">
-              Add dish
-            </button>
-          </form>
-        </div>
+  useEffect(() => {
+    const ordersRef = ref(database, "orders");
+    const unsubscribe = onValue(ordersRef, (data) => {
+      if (data.exists()) {
+        const ordersArray = Object.entries(data.val()).map(([key, value]) => ({
+          key,
+          ...value,
+        }));
+        setOrders(ordersArray);
+      } else {
+        setOrders([]);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
-        <section className="home collection">
-          <h2>Menu</h2>
-          <ul className="menu">
-            {menu.map((menuItem, index) => (
-              <li key={menuItem.key} className="food">
-                <img
-                  className="menuimg"
-                  src={menuItem.imageUrl}
-                  alt={menuItem.dish_Name}
-                />
-                <h3>{menuItem.dish_Name}</h3>
-                <p>Price: ${menuItem.dish_Price}</p>
-                <button onClick={() => handleRemoveMenuItem(menuItem.key)}>
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
+  const totalMenuItems = menu.length;
+  const totalOrders = orders.length;
+  const totalRevenue = orders.reduce(
+    (sum, order) => sum + Number(order.totalCost || 0),
+    0
+  );
+  const activeTables = (() => {
+    const tableSet = new Set();
+    orders.forEach((order) => {
+      const tableValue = order.Table || order.table;
+      if (tableValue) {
+        tableSet.add(String(tableValue));
+      }
+    });
+    return tableSet.size;
+  })();
+
+  const heroMetrics = [
+    { label: "Menu Items", value: totalMenuItems },
+    { label: "Orders", value: totalOrders },
+    { label: "Active Tables", value: activeTables },
+    { label: "Revenue", value: formatCurrency(totalRevenue) },
+  ];
+
+  const sortedMenu = [...menu].sort((a, b) => {
+    const nameA = (a.dish_Name || "").toLowerCase();
+    const nameB = (b.dish_Name || "").toLowerCase();
+    if (nameA < nameB) return -1;
+    if (nameA > nameB) return 1;
+    return 0;
+  });
+
+  const orderedOrders = [...orders].reverse();
+
+  const getStatusDescriptor = (status) => {
+    const normalized = String(status || "pending").toLowerCase();
+    const labelMap = {
+      paid: "Paid",
+      success: "Paid",
+      succeeded: "Paid",
+      pending: "Pending",
+      processing: "Processing",
+      failed: "Failed",
+      cancelled: "Cancelled",
+      canceled: "Cancelled",
+      refunded: "Refunded",
+    };
+    const sanitized = normalized.replace(/[^a-z0-9]+/g, "-") || "pending";
+    const label =
+      labelMap[normalized] ||
+      `${normalized.charAt(0).toUpperCase()}${normalized.slice(1)}`;
+    return {
+      label,
+      className: `admin-status admin-status-${sanitized}`,
+    };
+  };
+
+  return (
+    <section className="admin-shell">
+      <header className="admin-header">
+        <div className="admin-brand">
+          <div className="admin-brand-icon">D</div>
+          <div className="admin-brand-copy">
+            <span>Delightio</span>
+            <strong>Admin Console</strong>
+          </div>
+        </div>
+        <button
+          type="button"
+          className={`admin-nav-toggle ${navOpen ? "is-active" : ""}`}
+          onClick={handleNavToggle}
+          aria-expanded={navOpen}
+          aria-controls="admin-nav"
+          aria-label="Toggle navigation"
+        >
+          <span className="admin-nav-toggle-line admin-nav-toggle-line-horizontal"></span>
+          <span className="admin-nav-toggle-line admin-nav-toggle-line-vertical"></span>
+        </button>
+        <div className="admin-header-controls">
+          <nav
+            id="admin-nav"
+            className={`admin-nav ${navOpen ? "is-open" : ""}`}
+          >
+            <a href="#dashboard" onClick={handleNavLinkClick}>
+              Dashboard
+            </a>
+            <a href="#orders" onClick={handleNavLinkClick}>
+              Order
+            </a>
+            <div className="admin-user">
+              <span>{username || "Admin"}</span>
+            </div>
+          </nav>
+          
+        </div>
+      </header>
+      <main className="admin-main">
+        <section id="dashboard" className="admin-dashboard">
+          <div className="admin-hero">
+            <div className="admin-hero-text">
+              <p>Welcome back</p>
+              <h2>{username || "Admin"}</h2>
+              <span>Curate dishes and keep your menu fresh.</span>
+            </div>
+            <div className="admin-hero-metrics">
+              {heroMetrics.map((metric) => (
+                <div key={metric.label} className="admin-metric">
+                  <span>{metric.label}</span>
+                  <strong>{metric.value}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="admin-panels">
+            <section className="admin-panel admin-panel-form">
+              <form className="admin-form" onSubmit={handleSubmitMenu}>
+                <h3>Add new dish</h3>
+                <label>
+                  Dish Name
+                  <input
+                    type="text"
+                    placeholder="Eg. Paneer Tikka"
+                    value={dish_Name}
+                    onChange={(e) => setDish_Name(e.target.value)}
+                    required
+                  />
+                </label>
+                <label>
+                  Price
+                  <input
+                    type="number"
+                    placeholder="Eg. 299"
+                    min="0"
+                    step="0.01"
+                    value={dish_Price}
+                    onChange={(e) => setDish_Price(e.target.value)}
+                    required
+                  />
+                </label>
+                <label className="admin-upload">
+                  Dish Photo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setImage(e.target.files?.[0] || null)}
+                    required
+                  />
+                </label>
+                <button type="submit">Save dish</button>
+              </form>
+            </section>
+            <section className="admin-panel admin-panel-menu">
+              <div className="admin-menu">
+                <div className="admin-section-header">
+                  <div>
+                    <h3>Menu catalogue</h3>
+                    <p>Review and manage live dishes.</p>
+                  </div>
+                  <span className="admin-pill">{menu.length}</span>
+                </div>
+                <ul className="admin-menu-grid">
+                  {sortedMenu.length === 0 ? (
+                    <li className="admin-empty">
+                      No dishes yet. Start by adding your first item.
+                    </li>
+                  ) : (
+                    sortedMenu.map((menuItem) => (
+                      <li key={menuItem.key} className="admin-menu-card">
+                        <img
+                          src={menuItem.imageUrl || FALLBACK_IMAGE}
+                          alt={menuItem.dish_Name}
+                          onError={(event) => {
+                            event.currentTarget.src = FALLBACK_IMAGE;
+                          }}
+                        />
+                        <div className="admin-menu-content">
+                          <div className="admin-menu-headline">
+                            <h4>{menuItem.dish_Name}</h4>
+                            <span>{formatCurrency(menuItem.dish_Price)}</span>
+                          </div>
+                          <p>{menuItem.dish_Id}</p>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveMenuItem(menuItem.key)}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </div>
+            </section>
+          </div>
         </section>
-      </section>
-      <Footer />
+        <section id="orders" className="admin-orders">
+          <div className="admin-section-header">
+            <div>
+              <h3>Orders overview</h3>
+              <p>Track live orders and payment status.</p>
+            </div>
+            <span className="admin-pill">{orders.length}</span>
+          </div>
+          <div className="admin-orders-list">
+            {orderedOrders.length === 0 ? (
+              <div className="admin-empty">No orders recorded yet.</div>
+            ) : (
+              orderedOrders.map((order) => {
+                const status = getStatusDescriptor(order.paymentStatus);
+                const tableLabel = order.Table || order.table || "N/A";
+                const itemCount = Array.isArray(order.menuItems)
+                  ? order.menuItems.reduce(
+                      (total, item) => total + Number(item.quantity || 0),
+                      0
+                    )
+                  : 0;
+                const displayItems = Array.isArray(order.menuItems)
+                  ? order.menuItems.slice(0, 3)
+                  : [];
+                return (
+                  <article key={order.key} className="admin-order-card">
+                    <div className="admin-order-header">
+                      <div className="admin-order-title">
+                        <span className="admin-order-name">
+                          {order.customerName || "Guest"}
+                        </span>
+                        <span className="admin-order-table">
+                          Table {tableLabel}
+                        </span>
+                      </div>
+                      <span className={status.className}>{status.label}</span>
+                    </div>
+                    <div className="admin-order-meta">
+                      <span>{itemCount} items</span>
+                      <span>{formatCurrency(order.totalCost)}</span>
+                      <span>{order.stripeSessionId || "Manual"}</span>
+                    </div>
+                    {displayItems.length > 0 ? (
+                      <ul className="admin-order-items">
+                        {displayItems.map((item, index) => (
+                          <li
+                            key={`${order.key}-${item.dish_Id || index}`}
+                          >
+                            <span>{item.dish_Name}</span>
+                            <span>x{item.quantity || 1}</span>
+                          </li>
+                        ))}
+                        {Array.isArray(order.menuItems) &&
+                        order.menuItems.length > displayItems.length ? (
+                          <li className="admin-more">
+                            +{order.menuItems.length - displayItems.length} more
+                          </li>
+                        ) : null}
+                      </ul>
+                    ) : null}
+                  </article>
+                );
+              })
+            )}
+          </div>
+        </section>
+      </main>
     </section>
   );
 }
