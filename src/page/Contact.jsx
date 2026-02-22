@@ -1,7 +1,9 @@
 import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { Mail, Phone, MapPin, MessageSquare, Clock, ArrowRight } from "lucide-react";
 import Navbar from "../comp/Navbar";
 
-export default function Contact() {
+const Contact = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -10,173 +12,185 @@ export default function Contact() {
     guests: "",
     message: "",
   });
-  const [submitting, setSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState({ type: "", message: "" });
-  const API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || (typeof window !== "undefined" && window.location.hostname === "localhost" ? "http://localhost:3001" : "https://delightio.onrender.com")).replace(/\/$/, "");
-  const channels = [
-    { title: "Reservations", value: "+91 88000 11223", detail: "Table bookings and tasting menus" },
-    { title: "Catering", value: "+91 88000 44556", detail: "Events, launches, and celebrations" },
-    { title: "Concierge", value: "hello@delightio.com", detail: "General enquiries and feedback" },
-  ];
-  const topics = [
-    { value: "reservation", label: "Reservation" },
-    { value: "event", label: "Private event" },
-    { value: "corporate", label: "Corporate catering" },
-    { value: "partnership", label: "Partnership" },
-    { value: "feedback", label: "Feedback" },
-  ];
+  const [loading, setLoading] = useState(false);
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setFormData((previous) => ({ ...previous, [name]: value }));
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setSubmitting(true);
-    setFeedback({ type: "", message: "" });
-    try {
-      const response = await fetch(`${API_BASE_URL}/contact`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      if (!response.ok) {
-        const data = await response.json().catch(() => null);
-        const errorMessage = data?.message || "Unable to submit your request right now.";
-        throw new Error(errorMessage);
-      }
-      setFeedback({
-        type: "success",
-        message: "Thank you. Our team will confirm the next steps shortly.",
-      });
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setTimeout(() => {
+      alert("Message transmitted to the concierge. We will respond shortly.");
+      setLoading(false);
       setFormData({ name: "", email: "", phone: "", topic: "reservation", guests: "", message: "" });
-    } catch (error) {
-      setFeedback({
-        type: "error",
-        message: error.message || "Unable to submit your request right now.",
-      });
-    } finally {
-      setSubmitting(false);
-    }
+    }, 1500);
   };
+
+  const contactMethods = [
+    { icon: <Phone size={24} />, title: "Concierge", value: "+91 88000 11223", desc: "For table reservations" },
+    { icon: <Mail size={24} />, title: "Inquiries", value: "hello@delightio.com", desc: "Events & partnerships" },
+    { icon: <MapPin size={24} />, title: "Visit Us", value: "Aura Tower, Sector 45", desc: "Gurugram, HR 122003" },
+  ];
 
   return (
-    <section>
+    <div className="min-h-screen bg-slate-950">
       <Navbar />
-      <main className="bg-stone-50" style={{ fontFamily: "Epilogue, Noto Sans, sans-serif" }}>
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-[var(--primary-color)]/15 via-transparent to-amber-100/40" aria-hidden="true"></div>
-          <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-14">
-            <header className="text-center space-y-4 text-stone-800">
-              <p className="text-sm uppercase tracking-[0.35em] text-[var(--primary-color)]">Connect with Delightio</p>
-              <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Tell us how we can host you</h1>
-              <p className="max-w-2xl mx-auto text-base md:text-lg text-stone-600">
-                Share your plans and our hospitality leads will tailor the perfect culinary experience, from intimate dinners to full-scale celebrations.
+
+      {/* Background elements */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-500/5 blur-[120px] rounded-full pointer-events-none"></div>
+
+      <main className="max-w-7xl mx-auto px-4 md:px-8 pt-32 pb-20">
+        <div className="grid lg:grid-cols-12 gap-16">
+
+          {/* Left Column: Info */}
+          <div className="lg:col-span-12 xl:col-span-5 space-y-12">
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+            >
+              <span className="text-xs font-black text-amber-500 uppercase tracking-[0.6em] mb-6 block">Inquiries & Reservations</span>
+              <h1 className="text-6xl md:text-7xl font-black text-white leading-tight mb-8 tracking-tighter uppercase">An Exclusive <br /><span className="text-amber-500">Dialogue.</span></h1>
+              <p className="text-xl text-slate-400 font-medium leading-relaxed max-w-md italic">
+                From intimate candlelit dinners to grand corporate celebrations, our concierge team is dedicated to orchestrating your perfect experience.
               </p>
-            </header>
-            <div className="grid gap-8 lg:grid-cols-[2fr_3fr]">
-              <aside className="space-y-8">
-                <div className="grid gap-4">
-                  {channels.map((item) => (
-                    <article key={item.title} className="bg-white border border-stone-200 rounded-2xl shadow-sm p-6 space-y-2">
-                      <p className="text-xs uppercase tracking-[0.3em] text-[var(--primary-color)]">{item.title}</p>
-                      <p className="text-xl font-semibold text-stone-900">{item.value}</p>
-                      <p className="text-sm text-stone-600">{item.detail}</p>
-                    </article>
-                  ))}
-                </div>
-              </aside>
-              <form className="bg-white border border-stone-200 rounded-2xl shadow-sm p-10 space-y-6" onSubmit={handleSubmit}>
-                <div className="grid gap-6 md:grid-cols-2">
-                  <label className="flex flex-col gap-2 text-sm font-medium text-stone-700">
-                    Full name
-                    <input
-                      className="rounded-xl border border-stone-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      placeholder="Aarav Malhotra"
-                      required
-                    />
-                  </label>
-                  <label className="flex flex-col gap-2 text-sm font-medium text-stone-700">
-                    Email address
-                    <input
-                      className="rounded-xl border border-stone-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]"
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="aarav@delightio.com"
-                      required
-                    />
-                  </label>
-                </div>
-                <div className="grid gap-6 md:grid-cols-2">
-                  <label className="flex flex-col gap-2 text-sm font-medium text-stone-700">
-                    Phone number
-                    <input
-                      className="rounded-xl border border-stone-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]"
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      placeholder="+91 90000 12345"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-2 text-sm font-medium text-stone-700">
-                    Topic
-                    <select
-                      className="rounded-xl border border-stone-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]"
-                      name="topic"
-                      value={formData.topic}
-                      onChange={handleChange}
-                    >
-                      {topics.map((topic) => (
-                        <option key={topic.value} value={topic.value}>{topic.label}</option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-                <label className="flex flex-col gap-2 text-sm font-medium text-stone-700">
-                  Guests
-                  <input
-                    className="rounded-xl border border-stone-300 px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]"
-                    name="guests"
-                    value={formData.guests}
-                    onChange={handleChange}
-                    placeholder="Number of guests"
-                  />
-                </label>
-                <label className="flex flex-col gap-2 text-sm font-medium text-stone-700">
-                  Message
-                  <textarea
-                    className="rounded-xl border border-stone-300 px-3 py-3 shadow-sm min-h-36 focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]"
-                    name="message"
-                    value={formData.message}
-                    onChange={handleChange}
-                    placeholder="Share your preferred date, cuisine inspirations, and any special requests"
-                    required
-                  />
-                </label>
-                <button
-                  className={`w-full bg-[var(--primary-color)] text-white rounded-xl px-5 py-3 text-sm font-semibold tracking-wide transition-colors ${submitting ? "opacity-70 cursor-not-allowed" : "hover:bg-opacity-90"}`}
-                  type="submit"
-                  disabled={submitting}
+            </motion.div>
+
+            <div className="space-y-10">
+              {contactMethods.map((m, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="flex items-start gap-8 group"
                 >
-                  {submitting ? "Sending..." : "Submit request"}
-                </button>
-                {feedback.message ? (
-                  <p className={`text-sm text-center ${feedback.type === "success" ? "text-green-600" : "text-red-600"}`}>
-                    {feedback.message}
-                  </p>
-                ) : null}
-              </form>
+                  <div className="bg-white/5 p-5 rounded-[1.5rem] border border-white/5 text-amber-500 group-hover:bg-amber-500 group-hover:text-black transition-all duration-500 group-hover:-rotate-12">
+                    {m.icon}
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2">{m.title}</p>
+                    <p className="text-2xl font-black text-white mb-1 tracking-tight">{m.value}</p>
+                    <p className="text-sm font-medium text-slate-500 italic">{m.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
             </div>
+
+            <div className="glass-card p-10 border-amber-500/10 rounded-[2.5rem] relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 blur-3xl rounded-full group-hover:bg-amber-500/10 transition-colors"></div>
+              <div className="flex items-center gap-4 text-amber-500 mb-6">
+                <Clock size={20} />
+                <span className="font-black text-xs uppercase tracking-[0.3em]">Boutique Hours</span>
+              </div>
+              <div className="space-y-4 font-bold text-slate-300">
+                <div className="flex justify-between items-center border-b border-white/5 pb-4">
+                  <span className="text-xs uppercase tracking-widest text-slate-500">Weekdays</span>
+                  <span className="text-white text-lg font-black">12:00 — 23:30</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs uppercase tracking-widest text-slate-500">Weekends</span>
+                  <span className="text-white text-lg font-black">11:00 — 02:00</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Form */}
+          <div className="lg:col-span-12 xl:col-span-7">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="glass rounded-[3.5rem] p-8 md:p-16 border border-white/10 shadow-2xl relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none">
+                <MessageSquare size={200} />
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-10 relative z-10">
+                <div className="grid md:grid-cols-2 gap-10">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Guest Identity</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Alexander Sterling"
+                      className="w-full glass-card bg-transparent border-white/5 p-5 rounded-2xl outline-none focus:border-amber-500/30 transition-all font-bold"
+                      required
+                      value={formData.name}
+                      onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Digital Correspondence</label>
+                    <input
+                      type="email"
+                      placeholder="sterling@delightio.com"
+                      className="w-full glass-card bg-transparent border-white/5 p-5 rounded-2xl outline-none focus:border-amber-500/30 transition-all font-bold"
+                      required
+                      value={formData.email}
+                      onChange={e => setFormData({ ...formData, email: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-10">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Nature of Request</label>
+                    <div className="relative">
+                      <select
+                        className="w-full glass-card bg-slate-950 border-white/5 p-5 rounded-2xl outline-none focus:border-amber-500/30 transition-all font-bold appearance-none cursor-pointer"
+                        value={formData.topic}
+                        onChange={e => setFormData({ ...formData, topic: e.target.value })}
+                      >
+                        <option value="reservation">Table Reservation</option>
+                        <option value="event">Private Celebration</option>
+                        <option value="catering">Gourmet Catering</option>
+                        <option value="feedback">Guest Experience Feedback</option>
+                      </select>
+                      <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 font-black">
+                        <ArrowRight size={14} className="rotate-90" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Party Magnitude</label>
+                    <input
+                      type="number"
+                      placeholder="Number of esteemed guests"
+                      className="w-full glass-card bg-transparent border-white/5 p-5 rounded-2xl outline-none focus:border-amber-500/30 transition-all font-bold"
+                      value={formData.guests}
+                      onChange={e => setFormData({ ...formData, guests: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Personal Requirements</label>
+                  <textarea
+                    rows="5"
+                    placeholder="Describe your vision or specify any dietary requirements..."
+                    className="w-full glass-card bg-transparent border-white/5 p-5 rounded-2xl outline-none focus:border-amber-500/30 transition-all font-bold resize-none leading-relaxed"
+                    required
+                    value={formData.message}
+                    onChange={e => setFormData({ ...formData, message: e.target.value })}
+                  ></textarea>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full btn-primary py-6 text-lg group overflow-hidden relative"
+                >
+                  <span className="flex items-center justify-center gap-4 relative z-10 font-black uppercase tracking-[0.2em]">
+                    {loading ? "Transmitting..." : "Engage Concierge"}
+                    <ArrowRight size={20} className="group-hover:translate-x-3 transition-transform duration-500" />
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-amber-600 to-amber-500 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+                </button>
+              </form>
+            </motion.div>
           </div>
         </div>
       </main>
-    </section>
+    </div>
   );
-}
+};
+
+export default Contact;

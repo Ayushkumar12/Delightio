@@ -8,3 +8,8 @@
 {"ts":"2025-10-01T15:16:03.318Z","level":"info","message":"Server started","port":3001}
 {"ts":"2025-10-31T04:41:32.201Z","level":"info","message":"Server started","port":3001}
 {"ts":"2025-11-08T05:01:28.120Z","level":"info","message":"Server started","port":3001}
+{"ts":"2026-02-22T07:47:58.229Z","level":"info","message":"Server started","port":3001}
+{"ts":"2026-02-22T07:53:42.058Z","level":"info","route":"/checkout","message":"Checkout session created","customerName":"ayush","stripeSessionId":"cs_test_b1L2qzTaZ3bjbsRaHvXBe2Ab1WS2jsIqJ5HmJ8meqNVcrsP6mSYwhJiEaU","ip":"::1"}
+{"ts":"2026-02-22T07:59:03.988Z","level":"info","message":"Server started","port":3001}
+{"ts":"2026-02-22T08:02:21.166Z","level":"info","route":"/checkout","message":"Checkout session created","customerName":"ayush","stripeSessionId":"cs_test_a16FJI4MoU7TIsj5yccaPa9NU3JgYskMpdr1T0rt0VnPiTlmPVPcnKBl5l","ip":"::1"}
+{"ts":"2026-02-22T08:08:31.811Z","level":"info","route":"/checkout","message":"Checkout session created","customerName":"shdfs","stripeSessionId":"cs_test_b1I64kkwpx43QqHa805o0wbQpn4VaQk5fK27mxxlyoUaH9T5fnwK9yp6Ls","ip":"::1"}

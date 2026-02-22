@@ -1,77 +1,113 @@
-// import React from 'react';
-// import { getAuth } from 'firebase/auth';
-// import { initializeApp } from 'firebase/app';
-// // import "../asserts/style/nav.css"; 
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Menu, X, UtensilsCrossed, User, Info, Phone } from 'lucide-react';
+import { useAuth } from '../Authentication/Authpro';
 
-// const firebaseConfig = {
-//   apiKey: "AIzaSyBnnUtNzcnw0UYR8ikFJptHkuzZFkvp4k4",
-//   authDomain: "online-food-order-80833.firebaseapp.com",
-//   databaseURL: "https://online-food-order-80833-default-rtdb.firebaseio.com",
-//   projectId: "online-food-order-80833",
-//   storageBucket: "online-food-order-80833.appspot.com",
-//   messagingSenderId: "980243962311",
-//   appId: "1:980243962311:web:6c80cf64470477b1bc21e2",
-//   measurementId: "G-FF4PLG3S2T",
-// };
+const Navbar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const location = useLocation();
+  const { username } = useAuth();
 
-// // Initialize Firebase
-// const app = initializeApp(firebaseConfig);
-// const auth = getAuth(app); // Get the Auth instance
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
-// export default function Navbar() {
-//   const logout = async () => {
-//     try {
-//       await auth.signOut(); // Use signOut method
-//       alert("Signed out successfully");
-//     } catch (error) {
-//       alert("Error signing out: " + error.message); // Corrected error handling
-//     }
-//   };
-
-//   return (
-//     <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-stone-200 px-6 md:px-10 py-4">
-//       <div className="flex items-center gap-3 text-stone-800">
-//         <svg className="w-8 h-8 text-[var(--primary-color)]" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-//           <path d="M24 4C25.7818 14.2173 33.7827 22.2182 44 24C33.7827 25.7818 25.7818 33.7827 24 44C22.2182 33.7827 14.2173 25.7818 4 24C14.2173 22.2182 22.2182 14.2173 24 4Z" fill="currentColor"></path>
-//         </svg>
-//         <h1 className="text-stone-800 text-2xl font-bold leading-tight tracking-[-0.015em]">Delightio</h1>
-//       </div>
-//       <div className="flex items-center gap-4">
-//         <nav className="hidden md:flex items-center gap-6">
-//           <a className="text-stone-600 hover:text-[var(--primary-color)] text-base font-medium leading-normal transition-colors" href="/">Menu</a>
-//           <a className="text-stone-600 hover:text-[var(--primary-color)] text-base font-medium leading-normal transition-colors" href="/about">About</a>
-//           <a className="text-stone-600 hover:text-[var(--primary-color)] text-base font-medium leading-normal transition-colors" href="/contact">Contact</a>
-//         </nav>
-
-//         <button className="md:hidden flex items-center justify-center size-10 rounded-md border border-stone-200 bg-white text-stone-600">
-//           <span className="material-symbols-outlined">menu</span>
-//         </button>
-//       </div>
-//     </header>
-//     // <nav>
-//     //   <h2>Delightio</h2>
-//     //   <ul className='side'>
-//     //     <Link to='/admin' className='log'>Admin</Link> 
-//     //     <Link to='/order' className='log'>Order</Link>
-//     //     <a href='' onClick={logout} className='log' style={{ cursor: 'pointer' }}>Logout</a>
-//     //   </ul>
-//     // </nav>
-//   );
-// }
-
-
-import React from 'react';
-import { Link } from 'react-router-dom';
+  const navLinks = [
+    { name: 'Menu', path: '/', icon: <UtensilsCrossed size={18} /> },
+    { name: 'About', path: '/about', icon: <Info size={18} /> },
+    { name: 'Contact', path: '/contact', icon: <Phone size={18} /> },
+  ];
 
   return (
-        <div className="fixed md:relative bottom-0 left-0 w-full bg-[#1F2937] border-t border-gray-700 flex justify-around items-center py-3 z-50 md:top-0 md:bottom-auto">
-        {navItems[role]?.map((item,index)=>(
-          <Link to={item.to} className="flex flex-col justify-center items-center text-center text-[#F9FAFB] text-xl hover:text-yellow-300 transition" key={index}>
-              <div className='text-2xl mb-1 md:hidden'>sadlka</div>
-              <span className='text-[0.7rem]'>msad</span>
+    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'py-3' : 'py-5'}`}>
+      <div className="max-w-7xl mx-auto px-4 md:px-8">
+        <div className={`glass rounded-2xl px-6 py-3 flex items-center justify-between border border-white/10 shadow-2xl transition-all duration-300 ${scrolled ? 'bg-slate-900/80' : 'bg-transparent'}`}>
+
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="bg-amber-500 p-2 rounded-xl group-hover:rotate-12 transition-transform duration-300">
+              <UtensilsCrossed className="text-black" size={24} />
+            </div>
+            <span className="text-2xl font-black bg-gradient-to-r from-white to-amber-500 bg-clip-text text-transparent">
+              DELIGHTIO
+            </span>
           </Link>
-        ))}
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-8">
+            {navLinks.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`flex items-center gap-2 text-sm font-semibold transition-colors duration-200 ${location.pathname === link.path ? 'text-amber-500' : 'text-slate-300 hover:text-white'
+                  }`}
+              >
+                {link.icon}
+                {link.name}
+              </Link>
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-4">
+            <Link to="/auth" className="hidden border-l border-slate-700 pl-6 md:flex items-center gap-2 text-slate-300 hover:text-white transition-colors">
+              <User size={18} />
+              <span className="text-sm font-medium">{username || 'Admin'}</span>
+            </Link>
+
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="md:hidden text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
+            >
+              {isOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="absolute top-full left-0 w-full p-4 md:hidden"
+          >
+            <div className="glass rounded-2xl border border-white/10 p-6 flex flex-col gap-4 shadow-2xl">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  onClick={() => setIsOpen(false)}
+                  className={`flex items-center gap-4 p-3 rounded-xl transition-all duration-200 ${location.pathname === link.path
+                    ? 'bg-amber-500 text-black'
+                    : 'text-slate-300 hover:bg-white/5'
+                    }`}
+                >
+                  {link.icon}
+                  <span className="font-bold">{link.name}</span>
+                </Link>
+              ))}
+              <Link
+                to="/auth"
+                onClick={() => setIsOpen(false)}
+                className="mt-4 flex items-center justify-center gap-2 p-3 border border-amber-500/30 text-amber-500 rounded-xl font-bold"
+              >
+                <User size={18} />
+                {username || 'Admin Login'}
+              </Link>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </nav>
   );
 };
 
